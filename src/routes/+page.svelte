@@ -1,168 +1,182 @@
 <script lang="ts">
-  // 消息类型定义
+  import { onMount } from 'svelte';
+  import '../app.css';
+
   type Message = {
     role: 'user' | 'assistant';
     content: string;
   };
 
-  let inputValue = $state<string>('');
-  let loading = $state<boolean>(false);
-  let messages = $state<Message[]>([]);
+  type Conversation = {
+    id: string;
+    title: string;
+    messages: Message[];
+    createdAt: number;
+  };
 
-  let chatContainer: HTMLDivElement | null = null;
+  let conversations = $state<Conversation[]>([]);
+  let currentId = $state<string | null>(null);
+  let inputValue = $state('');
+  let loading = $state(false);
 
-  async function sendQuery(): Promise<void> {
-    if (!inputValue.trim()) return;
+  // 当前会话
+  let currentConversation = $derived(
+    conversations.find((c) => c.id === currentId)
+  );
 
-    const userText = inputValue;
+  // 创建新会话
+  function createConversation() {
+    const id = crypto.randomUUID();
 
-    // 添加用户消息
-    messages = [...messages, { role: 'user', content: userText }];
+    const newConv: Conversation = {
+      id,
+      title: '新对话',
+      messages: [],
+      createdAt: Date.now()
+    };
 
-    inputValue = '';
+    conversations = [newConv, ...conversations];
+    currentId = id;
+  }
+
+  // 切换会话
+  function selectConversation(id: string) {
+    currentId = id;
+  }
+
+  // 删除会话（加一个基础功能）
+  function deleteConversation(id: string) {
+    conversations = conversations.filter((c) => c.id !== id);
+
+    if (currentId === id) {
+      currentId = conversations[0]?.id ?? null;
+    }
+  }
+
+  // 发送消息
+  async function sendQuery() {
+    if (!inputValue.trim() || !currentConversation) return;
+
     loading = true;
+
+    const userMessage: Message = {
+      role: 'user',
+      content: inputValue
+    };
+
+    currentConversation.messages = [
+      ...currentConversation.messages,
+      userMessage
+    ];
+
+    const query = inputValue;
+    inputValue = '';
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: userText }),
+        body: JSON.stringify({ query })
       });
 
-      const data: { answer?: string } = await res.json();
+      const data = await res.json();
 
-      const answer = data.answer ?? '(无返回内容)';
+      const aiMessage: Message = {
+        role: 'assistant',
+        content: data?.answer ?? '(无返回)'
+      };
 
-      // 添加AI回复
-      messages = [...messages, { role: 'assistant', content: answer }];
+      currentConversation.messages = [
+        ...currentConversation.messages,
+        aiMessage
+      ];
+
+      // 自动生成标题（仅第一次）
+      if (currentConversation.messages.length === 2) {
+        currentConversation.title = query.slice(0, 20);
+      }
     } catch (err) {
       console.error(err);
-
-      messages = [...messages, { role: 'assistant', content: '请求失败' }];
     } finally {
       loading = false;
     }
   }
 
-  function handleKeydown(e: KeyboardEvent): void {
-    if (e.key === 'Enter') {
-      sendQuery();
+  // 本地存储
+  onMount(() => {
+    const saved = localStorage.getItem('conversations');
+    if (saved) {
+      conversations = JSON.parse(saved);
+      currentId = conversations[0]?.id ?? null;
+    } else {
+      createConversation();
     }
-  }
+  });
 
-  // 自动滚动
   $effect(() => {
-    if (chatContainer) {
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+    conversations; // 👈 依赖追踪
+    localStorage.setItem(
+      'conversations',
+      JSON.stringify(conversations)
+    );
   });
 </script>
 
-<div class="page">
-  <!-- 聊天区域 -->
-  <div class="chat" bind:this={chatContainer}>
-    {#each messages as msg}
-      <div class="message {msg.role}">
-        <div class="bubble">
-          {msg.content}
-        </div>
+<div class="app">
+  <!-- 左侧 -->
+  <div class="sidebar">
+    <button class="new-btn"
+      tabindex="0"
+      onclick={() => createConversation }
+    >
+      + 新对话
+    </button>
+
+    {#each conversations as conv}
+      <div class="item"
+        role="button"
+        tabindex="0"
+        onclick={() => selectConversation(conv.id)}
+        onkeydown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            selectConversation(conv.id);
+          }
+        }}
+      >
+        <span>{conv.title}</span>
+        <button 
+          onclick={(e) => {
+            e.stopPropagation();
+            deleteConversation(conv.id);
+          }}
+        >×</button>
       </div>
     {/each}
-
-    {#if loading}
-      <div class="message assistant">
-        <div class="bubble loading">AI 正在思考...</div>
+  </div>
+    <!-- 右侧 -->
+  <div class="chat">
+    {#if currentConversation}
+      <div class="messages">
+        {#each currentConversation.messages as msg}
+          <div class="msg {msg.role}">
+            {msg.content}
+          </div>
+        {/each}
       </div>
     {/if}
-  </div>
 
-  <!-- 输入区域 -->
-  <div class="input-area">
-    <input
-      bind:value={inputValue}
-      placeholder="输入你的问题..."
-      onkeydown={handleKeydown}
-    />
-    <button onclick={sendQuery} disabled={loading}> 发送 </button>
+    <div class="input-area">
+      <input
+        bind:value={inputValue}
+        placeholder="请输入..."
+        onkeydown={(e) => e.key === 'Enter' && sendQuery()}
+      />
+      <button class="button-primary" onclick={sendQuery}>发送</button>
+    </div>
+
+    {#if loading}
+      <div class="loading">AI思考中...</div>
+    {/if}
   </div>
 </div>
 
-<style>
-  .page {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: #f7f7f8;
-  }
-
-  .chat {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-  }
-
-  .message {
-    display: flex;
-    margin-bottom: 12px;
-  }
-
-  .user {
-    justify-content: flex-end;
-  }
-
-  .assistant {
-    justify-content: flex-start;
-  }
-
-  .bubble {
-    max-width: 70%;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .user .bubble {
-    background: #4f46e5;
-    color: white;
-  }
-
-  .assistant .bubble {
-    background: white;
-    border: 1px solid #ddd;
-  }
-
-  .input-area {
-    border-top: 1px solid #ddd;
-    padding: 12px;
-    background: white;
-    display: flex;
-    gap: 10px;
-  }
-
-  input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-  }
-
-  button {
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: none;
-    background: #4f46e5;
-    color: white;
-    cursor: pointer;
-  }
-
-  button:disabled {
-    background: #aaa;
-  }
-
-  .loading {
-    font-size: 12px;
-    color: #888;
-  }
-</style>
