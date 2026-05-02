@@ -5,46 +5,6 @@
   background: #f7f7f8;
 }
 
-.sidebar {
-  width: 260px;
-  background: #eee;
-  color: white;
-
-  display: flex;
-  flex-direction: column;
-
-  padding: 10px;
-}
-
-.sidebar button {
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f7f7f8;
-  color: black;
-  cursor: pointer;
-}
-
-.sidebar .item {
-  padding: 10px 12px;
-  border-radius: 8px;
-
-  cursor: pointer;
-  color: black;
-
-  transition: background 0.15s ease;
-}
-
-.sidebar .item:hover {
-  background: #e0e0e0;
-}
-
-.sidebar .item.active {
-  background: #d4d4d8;
-  font-weight: 500;
-}
-
 .chatwindow {
   flex: 1;
   display: flex;
@@ -109,8 +69,8 @@
 }
 
 .user .bubble {
-  background: #4f46e5;
-  color: white;
+  background: #e4e4e7;
+  color: black;
 }
 
 .assistant .bubble {
@@ -165,4 +125,107 @@ button:disabled {
 .loading {
   font-size: 12px;
   color: #888;
+}
+
+.sidebar {
+  width: 260px;
+  background: #eee;
+  color: white;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 10px;
+}
+
+.sidebar button {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f7f7f8;
+  color: black;
+  cursor: pointer;
+}
+
+.sidebar .item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  cursor: pointer;
+  color: black;
+  font-size: 13px;
+
+  transition: background 0.15s ease;
+}
+
+.sidebar .item:hover {
+  background: #e0e0e0;
+}
+
+.sidebar .item.active {
+  background: #e4e4e7;
+  font-weight: 500;
+}
+
+.more-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  font-size: 13px;
+  padding: 2px 4px;
+  color: white;
+}
+
+.more-button {
+  opacity: 0;
+}
+
+.sidebar .item:hover .more-button {
+  opacity: 1;
+}
+
+.menu {
+  position: absolute;
+  right: 8px;
+  top: 36px;
+
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.menu-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background: #f0f0f0;
+}
+
+.menu-item.danger {
+  color: red;
+}
+
+.item {
+  position: relative;
+}
+
+.rename-input {
+  width: 100%;
+  font-size: 13px;
+  padding: 4px 6px;
+  border: 1px solid #4f46e5;
+  border-radius: 4px;
+  outline: none;
 }

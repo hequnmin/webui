@@ -11,3 +11,6 @@ export type Conversation = {
   title: string;
   messages: Message[];
 };
+
+export const StorageKey = "chat_conversations";
+export const CurrentKey = "chat_current_id";
