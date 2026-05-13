@@ -2,11 +2,12 @@
   import Sidebar from '$lib/components/Sidebar.svelte';
   import ChatWindow from '$lib/components/ChatWindow.svelte';
 
-  import { conversations, conversation } from '$lib/stores/chat';
+  import { initConversations, conversations, conversation } from '$lib/stores/chat';
   import { get } from 'svelte/store';
   import { onMount } from 'svelte';
 
   onMount(() => {
+    initConversations();
     const list = get(conversations);
 
     if (list.length > 0) {
