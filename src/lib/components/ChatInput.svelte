@@ -125,5 +125,6 @@
     oninput={(e) => autoResize(e.currentTarget)}
     onkeydown={handleKeydown}
   ></textarea>
-  <button onclick={handleSend} disabled={$loading}> 发送 </button>
+  <button class="mb-2.5 px-2.5 py-2 rounded-md border bg-gray-50 border-gray-300 text-black text-sm cursor-pointer hover:bg-gray-300 transition-colors" 
+    onclick={handleSend} disabled={$loading}> 发送 </button>
 </div>

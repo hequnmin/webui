@@ -1,5 +1,7 @@
 import { writable, get } from "svelte/store";
 import type { Conversation } from "$lib/types/chat";
+import { v4 as uuidv4 } from "uuid";
+import { browser } from "$app/environment";
 
 const STORAGE_KEY = "chat_conversations";
 const CURRENT_KEY = "chat_current_id";
@@ -7,6 +9,18 @@ const CURRENT_KEY = "chat_current_id";
 // 会话列表和当前会话
 export const conversations = writable<Conversation[]>(loadConversations());
 export const conversation = writable<Conversation | null>(null);
+
+export function initConversations() {
+  if (!browser) return;
+
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    const list: Conversation[] = data ? JSON.parse(data) : [];
+    conversations.set(list);
+  } catch {
+    conversations.set([]);
+  }
+}
 
 // 读取本地存储函数
 function loadConversations(): Conversation[] {
@@ -20,6 +34,8 @@ function loadConversations(): Conversation[] {
 
 // 写入本地存储函数
 function saveConversations(list: Conversation[]) {
+  if (!browser) return;
+
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   } catch (err) {
@@ -36,7 +52,7 @@ export function ensureConversation(title: string): Conversation {
 
   if (!conv) {
     conv = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       title,
       messages: [],
     };
@@ -63,7 +79,7 @@ export function syncConversation(conv: Conversation) {
 // 创建新会话
 export function createConversation(title: string): Conversation {
   const conv: Conversation = {
-    id: crypto.randomUUID(),
+    id: uuidv4(),
     title: title.slice(0, 20),
     messages: [],
   };
