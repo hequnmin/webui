@@ -1,11 +1,6 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
-  import {
-    loading,
-    ensureConversation,
-    syncConversation,
-  } from '$lib/stores/chat';
-  import type { Message } from '$lib/types/chat';
+  import { sendQuery } from '$lib/utils/chat';
+  import { loading } from '$lib/stores/chat';
 
   let inputValue = $state<string>('');
 
@@ -30,91 +25,91 @@
     el.style.height = el.scrollHeight + 'px';
   }
 
-  function removeReferenceTags(text: string): string {
-    return text.replace(/<reference\b[^>]*>[\s\S]*?<\/reference>/gi, '');
-  }
+  // function removeReferenceTags(text: string): string {
+  //   return text.replace(/<reference\b[^>]*>[\s\S]*?<\/reference>/gi, '');
+  // }
 
-  // 核心方法
-  async function sendQuery(inputValue: string): Promise<void> {
-    if (!browser) return;
-    if (!inputValue.trim()) return;
+  // // 核心方法
+  // async function sendQuery(inputValue: string): Promise<void> {
+  //   if (!browser) return;
+  //   if (!inputValue.trim()) return;
 
-    let conv = ensureConversation(inputValue);
+  //   let conv = ensureConversation(inputValue);
 
-    // 用户消息
-    const uMessage: Message = {
-      role: 'user',
-      content: inputValue,
-      loading: false,
-    };
+  //   // 用户消息
+  //   const uMessage: Message = {
+  //     role: 'user',
+  //     content: inputValue,
+  //     loading: false,
+  //   };
 
-    conv = {
-      ...conv,
-      messages: [...conv.messages, uMessage],
-    };
+  //   conv = {
+  //     ...conv,
+  //     messages: [...conv.messages, uMessage],
+  //   };
 
-    syncConversation(conv);
+  //   syncConversation(conv);
 
-    loading.set(true);
+  //   loading.set(true);
 
-    // AI 占位消息
-    let aMessage: Message = {
-      role: 'assistant',
-      content: '正在思考...',
-      loading: true,
-    };
+  //   // AI 占位消息
+  //   let aMessage: Message = {
+  //     role: 'assistant',
+  //     content: '正在思考...',
+  //     loading: true,
+  //   };
 
-    conv = {
-      ...conv,
-      messages: [...conv.messages, aMessage],
-    };
+  //   conv = {
+  //     ...conv,
+  //     messages: [...conv.messages, aMessage],
+  //   };
 
-    syncConversation(conv);
+  //   syncConversation(conv);
 
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: inputValue }),
-      });
+  //   try {
+  //     const res = await fetch('/api/chat', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ query: inputValue }),
+  //     });
 
-      const data: { answer?: string } = await res.json();
-      const answer = data.answer ?? '(无返回内容)';
+  //     const data: { answer?: string } = await res.json();
+  //     const answer = data.answer ?? '(无返回内容)';
 
-      const content = removeReferenceTags(answer);
+  //     const content = removeReferenceTags(answer);
 
-      // 更新 AI 消息
-      aMessage = {
-        ...aMessage,
-        content: content,
-        loading: false,
-      };
+  //     // 更新 AI 消息
+  //     aMessage = {
+  //       ...aMessage,
+  //       content: content,
+  //       loading: false,
+  //     };
 
-      conv = {
-        ...conv,
-        messages: [...conv.messages.slice(0, -1), aMessage],
-      };
+  //     conv = {
+  //       ...conv,
+  //       messages: [...conv.messages.slice(0, -1), aMessage],
+  //     };
 
-      syncConversation(conv);
-    } catch (err) {
-      console.error(err);
+  //     syncConversation(conv);
+  //   } catch (err) {
+  //     console.error(err);
 
-      aMessage = {
-        ...aMessage,
-        content: '请求失败',
-        loading: false,
-      };
+  //     aMessage = {
+  //       ...aMessage,
+  //       content: '请求失败',
+  //       loading: false,
+  //     };
 
-      conv = {
-        ...conv,
-        messages: [...conv.messages.slice(0, -1), aMessage],
-      };
+  //     conv = {
+  //       ...conv,
+  //       messages: [...conv.messages.slice(0, -1), aMessage],
+  //     };
 
-      syncConversation(conv);
-    } finally {
-      loading.set(false);
-    }
-  }
+  //     syncConversation(conv);
+  //   } finally {
+  //     loading.set(false);
+  //   }
+  // }
 </script>
 
 <!-- 输入区域 -->
