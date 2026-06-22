@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Kanban, SquareKanban, SquarePen, Ellipsis, TextCursorInput, Trash2, PanelLeft } from 'lucide-svelte';
+  import { Kanban, SquareKanban, SquarePen, Ellipsis, TextCursorInput, Trash2, PanelLeft } from '@lucide/svelte';
   import {
     conversations,
     conversation,
