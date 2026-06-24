@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Kanban, SquareKanban, SquarePen, Ellipsis, TextCursorInput, Trash2, PanelLeft } from '@lucide/svelte';
+  import { Kanban, SquareKanban, SquarePen, Ellipsis, TextCursorInput, Trash2, PanelLeft, User } from '@lucide/svelte';
   import {
     conversations,
     conversation,
@@ -80,6 +80,7 @@
     <span class="text-black text-sm">新会话</span>
   </button>
 
+  <div class="flex-1 overflow-y-auto min-h-0">
   {#each $conversations as c}
     <div
       class="flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer text-sm text-black transition-colors relative group {$conversation?.id === c.id ? 'bg-gray-200 font-medium' : 'hover:bg-gray-200'}"
@@ -161,4 +162,15 @@
       {/if}
     </div>
   {/each}
+  </div>
+
+  <div class="mt-2 pt-2 border-t border-gray-200">
+    <a
+      href="/login"
+      class="flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors"
+    >
+      <User class="w-4 h-4" />
+      <span>登录 / 注册</span>
+    </a>
+  </div>
 </div>
