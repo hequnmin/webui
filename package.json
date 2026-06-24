@@ -4,9 +4,9 @@
   "version": "0.0.3",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider vite dev",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider vite build",
+    "preview": "cross-env NODE_OPTIONS=--openssl-legacy-provider vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
@@ -17,7 +17,9 @@
     "@sveltejs/kit": "^2.50.2",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@tailwindcss/postcss": "^4.2.4",
+    "@types/node": "^26.0.0",
     "autoprefixer": "^10.5.0",
+    "cross-env": "^10.1.0",
     "postcss": "^8.5.13",
     "svelte": "^5.54.0",
     "svelte-check": "^4.4.2",
@@ -28,6 +30,7 @@
   "dependencies": {
     "@lucide/svelte": "^1.21.0",
     "dotenv": "^17.4.2",
+    "iconv-lite": "^0.7.2",
     "marked": "^18.0.0",
     "uuid": "^14.0.0"
   }
