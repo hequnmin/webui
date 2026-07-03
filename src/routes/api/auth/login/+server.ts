@@ -1,5 +1,9 @@
 import type { RequestHandler } from "./$types";
 import { encryptPassword } from "$lib/server/crypto";
+import {
+  createSession,
+  serializeSessionCookie,
+} from "$lib/server/session";
 import { PUBLIC_API_URL } from "$env/static/public";
 
 const API_BASE = PUBLIC_API_URL ?? "http://127.0.0.1:3001";
@@ -45,10 +49,15 @@ export const POST: RequestHandler = async ({ request }) => {
     });
   }
 
-  // 3. 返回用户信息（去掉密码字段）
+  // 3. 创建服务端 session，设置 HttpOnly cookie
   const { password: _, ...safeUser } = user;
+  const session = createSession(safeUser);
+
   return new Response(JSON.stringify(safeUser), {
     status: 200,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": serializeSessionCookie(session.id),
+    },
   });
 };

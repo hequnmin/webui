@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { Kanban, SquareKanban, SquarePen, Ellipsis, TextCursorInput, Trash2, PanelLeft, User } from '@lucide/svelte';
+  import { Kanban, SquareKanban, SquarePen, Ellipsis, TextCursorInput, Trash2, PanelLeft, User, Settings, LogOut } from '@lucide/svelte';
+  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  import { logoutUser } from '$lib/utils/api';
   import {
     conversations,
     conversation,
@@ -165,12 +168,36 @@
   </div>
 
   <div class="mt-2 pt-2 border-t border-gray-200">
-    <a
-      href="/login"
-      class="flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors"
-    >
-      <User class="w-4 h-4" />
-      <span>登录 / 注册</span>
-    </a>
+    {#if $page.data.user}
+      <div class="px-2.5 py-2">
+        <p class="text-sm font-medium text-gray-900 truncate">{$page.data.user.username}</p>
+        <p class="text-xs text-gray-500 truncate">{$page.data.user.email}</p>
+      </div>
+      <a
+        href="/profile"
+        class="flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors"
+      >
+        <Settings class="w-4 h-4" />
+        <span>个人中心</span>
+      </a>
+      <button
+        class="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors"
+        onclick={async () => {
+          await logoutUser();
+          goto('/login');
+        }}
+      >
+        <LogOut class="w-4 h-4" />
+        <span>退出登录</span>
+      </button>
+    {:else}
+      <a
+        href="/login"
+        class="flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors"
+      >
+        <User class="w-4 h-4" />
+        <span>登录 / 注册</span>
+      </a>
+    {/if}
   </div>
 </div>
