@@ -3,6 +3,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { logoutUser } from '$lib/utils/api';
+  import { clearConversations } from '$lib/stores/chat';
   import {
     conversations,
     conversation,
@@ -35,7 +36,9 @@
 
   function createNewChat() {
     conversation.set(null);
-    console.log('new chat');
+    if ($page.url.pathname !== '/') {
+      goto('/');
+    }
   }
 
   function handleRename(id: string, title: string) {
@@ -61,8 +64,8 @@
     closeMenu();
   }
 
-  function handleDelete(id: string) {
-    deleteConversation(id);
+  async function handleDelete(id: string) {
+    await deleteConversation(id);
     closeMenu();
   }
 </script>
@@ -89,10 +92,18 @@
       class="flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer text-sm text-black transition-colors relative group {$conversation?.id === c.id ? 'bg-gray-200 font-medium' : 'hover:bg-gray-200'}"
       role="button"
       tabindex="0"
-      onclick={() => switchConversation(c.id)}
+      onclick={() => {
+        switchConversation(c.id);
+        if ($page.url.pathname !== '/') {
+          goto('/');
+        }
+      }}
       onkeydown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           switchConversation(c.id);
+          if ($page.url.pathname !== '/') {
+            goto('/');
+          }
         }
       }}
       onmouseleave={closeMenu}
@@ -184,6 +195,7 @@
         class="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-200 transition-colors"
         onclick={async () => {
           await logoutUser();
+          clearConversations();
           goto('/login');
         }}
       >
