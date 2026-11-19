@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { Kanban } from '@lucide/svelte';
+  import Sidebar from '$lib/components/Sidebar.svelte';
   import { updateUser, changePassword } from '$lib/utils/api';
 
   const user = $derived($page.data.user);
@@ -77,17 +77,14 @@
   }
 </script>
 
-<div class="min-h-screen bg-[#f7f7f8] p-4 md:p-8">
-  <div class="max-w-2xl mx-auto">
-    <div class="flex items-center gap-2 mb-8">
-      <Kanban class="w-7 h-7 stroke-2 text-green-500" />
-      <span class="text-xl font-semibold text-gray-900">Blueway ATE</span>
-    </div>
+<div class="page">
+  <Sidebar />
+  <div class="chatwindow overflow-y-auto p-4 md:p-8">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl font-semibold text-gray-900 mb-6">个人中心</h1>
 
-    <h1 class="text-2xl font-semibold text-gray-900 mb-6">个人中心</h1>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-      <h2 class="text-lg font-medium text-gray-900 mb-4">基本信息</h2>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">基本信息</h2>
 
       {#if profileError}
         <div class="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">{profileError}</div>
@@ -202,4 +199,6 @@
       </form>
     </div>
   </div>
+</div>
+
 </div>

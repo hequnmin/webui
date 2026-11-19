@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import { Kanban } from '@lucide/svelte';
   import { loginUser } from '$lib/utils/api';
 
@@ -39,7 +39,8 @@
     try {
       await loginUser(email.trim(), password);
       success = '登录成功！正在进入系统…';
-      setTimeout(() => {
+      setTimeout(async () => {
+        await invalidateAll();
         goto('/');
       }, 1000);
     } catch (err) {

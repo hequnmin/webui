@@ -4,38 +4,26 @@ import { v4 as uuidv4 } from "uuid";
 import { browser } from "$app/environment";
 
 const STORAGE_KEY = "chat_conversations";
-const CURRENT_KEY = "chat_current_id";
 
 // 会话列表和当前会话
-export const conversations = writable<Conversation[]>(loadConversations());
+export const conversations = writable<Conversation[]>([]);
 export const conversation = writable<Conversation | null>(null);
 
-export function initConversations() {
-  if (!browser) return;
+// 是否已登录（由调用方设置）
+export const isLoggedIn = writable<boolean>(false);
 
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    const list: Conversation[] = data ? JSON.parse(data) : [];
-    conversations.set(list);
-  } catch {
-    conversations.set([]);
-  }
-}
-
-// 读取本地存储函数
-function loadConversations(): Conversation[] {
+function loadLocalConversations(): Conversation[] {
+  if (!browser) return [];
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     return data ? JSON.parse(data) : [];
-  } catch (err) {
+  } catch {
     return [];
   }
 }
 
-// 写入本地存储函数
-function saveConversations(list: Conversation[]) {
+function saveLocalConversations(list: Conversation[]) {
   if (!browser) return;
-
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   } catch (err) {
@@ -43,8 +31,75 @@ function saveConversations(list: Conversation[]) {
   }
 }
 
+// 从服务端加载当前用户的会话
+export async function loadConversationsFromServer(): Promise<Conversation[]> {
+  const res = await fetch("/api/chat/conversations");
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error ?? `加载会话失败: ${res.status}`);
+  }
+  const list: Conversation[] = await res.json();
+  conversations.set(list);
+  return list;
+}
+
+// 清空会话（退出登录时调用）
+export function clearConversations() {
+  conversations.set([]);
+  conversation.set(null);
+}
+
+// 初始化：优先从服务端加载；未登录时从 localStorage 加载
+export async function initConversations(): Promise<void> {
+  if (!browser) return;
+
+  if (get(isLoggedIn)) {
+    try {
+      await loadConversationsFromServer();
+      return;
+    } catch (err) {
+      console.warn("从服务端加载会话失败，回退到本地", err);
+    }
+  }
+
+  conversations.set(loadLocalConversations());
+}
+
 // 状态
 export const loading = writable(false);
+
+// 将会话同步到服务端或本地
+async function persistConversation(conv: Conversation) {
+  if (get(isLoggedIn)) {
+    try {
+      const res = await fetch("/api/chat/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(conv),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("同步会话到服务端失败:", res.status, text);
+      } else {
+        console.log("会话已同步到服务端");
+      }
+    } catch (err) {
+      console.error("同步会话到服务端失败", err);
+    }
+  } else {
+    console.log("未登录，会话仅保存到本地");
+  }
+
+  // 同时更新本地缓存
+  conversations.update((list) => {
+    const exists = list.some((c) => c.id === conv.id);
+    const newList = exists
+      ? list.map((c) => (c.id === conv.id ? conv : c))
+      : [conv, ...list];
+    saveLocalConversations(newList);
+    return newList;
+  });
+}
 
 // 确保有当前会话
 export function ensureConversation(title: string): Conversation {
@@ -57,7 +112,7 @@ export function ensureConversation(title: string): Conversation {
       messages: [],
     };
     conversation.set(conv);
-    syncConversation(conv);
+    persistConversation(conv);
   }
 
   return conv;
@@ -66,14 +121,7 @@ export function ensureConversation(title: string): Conversation {
 // 同步会话列表
 export function syncConversation(conv: Conversation) {
   conversation.set(conv);
-
-  conversations.update((list) => {
-    const newList = list.some((c) => c.id === conv.id)
-      ? list.map((c) => (c.id === conv.id ? conv : c))
-      : [conv, ...list]; // 新会话放前面
-    saveConversations(newList); // 🌟 持久化
-    return newList;
-  });
+  persistConversation(conv);
 }
 
 // 创建新会话
@@ -83,7 +131,8 @@ export function createConversation(title: string): Conversation {
     title: title.slice(0, 20),
     messages: [],
   };
-  syncConversation(conv); // 同时加入列表并持久化
+  conversation.set(conv);
+  persistConversation(conv);
   return conv;
 }
 
@@ -96,10 +145,20 @@ export function switchConversation(id: string): Conversation | null {
 }
 
 // 删除会话
-export function deleteConversation(id: string) {
+export async function deleteConversation(id: string) {
+  if (get(isLoggedIn)) {
+    try {
+      await fetch(`/api/chat/conversations?conv_id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      console.error("删除服务端会话失败", err);
+    }
+  }
+
   conversations.update((list) => {
     const newList = list.filter((c) => c.id !== id);
-    saveConversations(newList); // 🌟 持久化
+    saveLocalConversations(newList);
     return newList;
   });
 
@@ -108,9 +167,3 @@ export function deleteConversation(id: string) {
     return current;
   });
 }
-
-// conversation.subscribe((conv) => {
-//   if (conv?.id) {
-//     localStorage.setItem(CURRENT_KEY, conv.id);
-//   }
-// });
